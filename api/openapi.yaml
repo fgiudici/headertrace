@@ -1,0 +1,89 @@
+openapi: 3.0.0
+info:
+  version: 0.9.0
+  title: Echo Headers
+  description: An API to echo back the headers of the received HTTP request
+  contact:
+    name: API Support
+  license:
+    name: MIT
+servers:
+  - url: http://localhost:8080
+    description: Local development server
+  - url: https://api.example.com
+    description: Production server
+paths:
+  /:
+    get:
+      description: Echoes back the received and sent headers
+      responses:
+        '200':
+          description: Successfully echoed back the headers
+          content:
+            text/html:
+              schema:
+                type: string
+                example: "<html><body>Headers:</body></html>"
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HeaderResponse'
+        '400':
+          description: Bad Request
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+components:
+  schemas:
+    HeaderResponse:
+      type: object
+      title: HeaderResponse
+      description: Response containing echoed HTTP headers and request information
+      properties:
+        headers:
+          type: object
+          description: HTTP headers received in the request
+          additionalProperties:
+            type: string
+          example:
+            "my-header": "foo"
+            "user-agent": "curl/7.68.0"
+        host:
+          type: string
+          description: Host and port of the server
+          example: "localhost:8080"
+        method:
+          type: string
+          description: HTTP method of the request
+          example: "GET"
+        path:
+          type: string
+          description: Request path
+          example: "/echo"
+        protocol:
+          type: string
+          description: HTTP protocol version
+          example: "HTTP/1.1"
+      required:
+        - headers
+        - host
+        - method
+        - path
+        - protocol
+    ErrorResponse:
+      type: object
+      title: ErrorResponse
+      description: Error response
+      properties:
+        code:
+          type: integer
+          format: int32
+          description: Error code
+          example: 400
+        message:
+          type: string
+          description: Error message
+          example: "Bad request"
+      required:
+        - code
+        - message
