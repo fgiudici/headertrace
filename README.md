@@ -1,2 +1,2 @@
 # headertrace
-HTTP server to help debugging HTTP header transformations
+A simple HTTP server echoing back HTTP client Headers.
