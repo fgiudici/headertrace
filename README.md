@@ -1,6 +1,6 @@
 <h1 align="center">
   <br>
-    <img width="130" src="./assets/logos/logotype.png">
+    <img width="600" src="./assets/logos/logotype-horizontal.png">
   <br>
 </h1>
 
