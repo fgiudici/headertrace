@@ -1,3 +1,12 @@
+GIT_TAG?=$(shell git describe --candidates=50 --abbrev=0 --tags 2>/dev/null || echo "v0.0.1" )
+GIT_COMMIT?=$(shell git rev-parse HEAD)
+GIT_COMMIT_SHORT?=$(shell git rev-parse --short HEAD)
+GO_MODULE?= $(shell go list -m)
+
+LDFLAGS:=-w -s
+LDFLAGS+=-X "$(GO_MODULE)/cmd.version=$(GIT_TAG)"
+LDFLAGS+=-X "$(GO_MODULE)/cmd.gitCommit=$(GIT_COMMIT)"
+
 .PHONY: help generate build test clean
 
 help:
@@ -13,7 +22,7 @@ generate:
 
 build:
 	@echo "Building application..."
-	go build -o bin/headertrace .
+	CGO_ENABLED=0 go build -ldflags '$(LDFLAGS)' -o bin/headertrace .
 
 test:
 	@echo "Running tests..."

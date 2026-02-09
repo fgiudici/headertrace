@@ -2,20 +2,32 @@ package cmd
 
 import (
 	"encoding/json"
-	"flag"
 	"fmt"
+	"log"
 	"net/http"
 	"strings"
 
 	"github.com/fgiudici/headertrace/api"
+	"github.com/spf13/pflag"
 )
 
 var (
-	port = flag.String("port", "8080", "Port to listen on")
-	host = flag.String("host", "0.0.0.0", "Host to listen on")
+	port         string
+	host         string
+	headers      []string
+	printVersion bool
 )
 
-type server struct{}
+func init() {
+	pflag.StringVarP(&port, "port", "p", "8080", "Port to listen on")
+	pflag.StringVarP(&host, "host", "", "0.0.0.0", "Host to listen on")
+	pflag.StringSliceVarP(&headers, "header", "H", []string{}, "Custom response header (key:value format)")
+	pflag.BoolVarP(&printVersion, "version", "v", false, "Print version and exit")
+}
+
+type server struct {
+	headers map[string]string
+}
 
 // Get implements api.ServerInterface
 func (s *server) Get(w http.ResponseWriter, r *http.Request) {
@@ -42,6 +54,9 @@ func (s *server) Get(w http.ResponseWriter, r *http.Request) {
 
 	// Set response headers
 	w.Header().Set("Content-Type", "application/json")
+	for key, value := range s.headers {
+		w.Header().Set(key, value)
+	}
 	w.WriteHeader(http.StatusOK)
 
 	// Encode and send the response
@@ -52,16 +67,30 @@ func (s *server) Get(w http.ResponseWriter, r *http.Request) {
 
 // Execute starts the HTTP server
 func Execute() error {
-	flag.Parse()
+	pflag.Parse()
+	if printVersion {
+		fmt.Println(getVersion())
+		return nil
+	}
+	// Parse custom headers
+	customHeaders := make(map[string]string)
+	for _, h := range headers {
+		parts := strings.SplitN(h, ":", 2)
+		if len(parts) == 2 {
+			customHeaders[parts[0]] = parts[1]
+		} else {
+			log.Fatalf("invalid header format '%s', expected 'key:value'\n", h)
+		}
+	}
 
 	// Create server instance
-	srv := &server{}
+	srv := &server{headers: customHeaders}
 
 	// Create handler from the generated code
 	handler := api.Handler(srv)
 
 	// Start listening
-	addr := fmt.Sprintf("%s:%s", *host, *port)
+	addr := fmt.Sprintf("%s:%s", host, port)
 	fmt.Printf("Starting server on %s\n", addr)
 	return http.ListenAndServe(addr, handler)
 }
