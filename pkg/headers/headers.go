@@ -31,3 +31,19 @@ func ToMap(headers http.Header) map[string]string {
 	}
 	return headerMap
 }
+
+func RemoteHostInfo(r *http.Request) string {
+	remoteAddr := r.RemoteAddr
+	userAgent := r.Header.Get("User-Agent")
+
+	// Proxied through Cloudflare?
+	if remote := r.Header.Get("CF-Connecting-IP"); remote != "" {
+		remoteAddr = fmt.Sprintf("%s (%s)", remote, r.Header.Get("Cf-Ipcountry"))
+	} else if remote := r.Header.Get("X-Real-Ip"); remote != "" {
+		remoteAddr = remote
+	} else if remote := r.Header.Get("X-Forwarded-For"); remote != "" {
+		remoteAddr = remote
+	}
+
+	return fmt.Sprintf("%s %q - %s %s %q", remoteAddr, userAgent, r.Method, r.Proto, r.URL.String())
+}

@@ -31,6 +31,8 @@ type server struct {
 
 // Get implements api.ServerInterface
 func (s *server) Get(w http.ResponseWriter, r *http.Request) {
+	logging.Infof("Received request: %s", hdrs.RemoteHostInfo(r))
+
 	// Convert headers to map
 	headers := hdrs.ToMap(r.Header)
 
