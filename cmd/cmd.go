@@ -5,9 +5,9 @@ import (
 	"fmt"
 	"log"
 	"net/http"
-	"strings"
 
 	"github.com/fgiudici/headertrace/api"
+	hdrs "github.com/fgiudici/headertrace/pkg/headers"
 	"github.com/spf13/pflag"
 )
 
@@ -32,10 +32,7 @@ type server struct {
 // Get implements api.ServerInterface
 func (s *server) Get(w http.ResponseWriter, r *http.Request) {
 	// Convert headers to map
-	headers := make(map[string]string)
-	for key, values := range r.Header {
-		headers[key] = strings.Join(values, ",")
-	}
+	headers := hdrs.ToMap(r.Header)
 
 	// Determine protocol version
 	protocol := r.Proto
@@ -73,14 +70,9 @@ func Execute() error {
 		return nil
 	}
 	// Parse custom headers
-	customHeaders := make(map[string]string)
-	for _, h := range headers {
-		parts := strings.SplitN(h, ":", 2)
-		if len(parts) == 2 {
-			customHeaders[parts[0]] = parts[1]
-		} else {
-			log.Fatalf("invalid header format '%s', expected 'key:value'\n", h)
-		}
+	customHeaders, err := hdrs.SliceToMap(headers)
+	if err != nil {
+		log.Fatal(err)
 	}
 
 	// Create server instance
