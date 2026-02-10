@@ -3,11 +3,11 @@ package cmd
 import (
 	"encoding/json"
 	"fmt"
-	"log"
 	"net/http"
 
 	"github.com/fgiudici/headertrace/api"
 	hdrs "github.com/fgiudici/headertrace/pkg/headers"
+	"github.com/fgiudici/headertrace/pkg/logging"
 	"github.com/spf13/pflag"
 )
 
@@ -57,8 +57,10 @@ func (s *server) Get(w http.ResponseWriter, r *http.Request) {
 	w.WriteHeader(http.StatusOK)
 
 	// Encode and send the response
-	if err := json.NewEncoder(w).Encode(response); err != nil {
-		fmt.Printf("Error encoding response: %v\n", err)
+	enc := json.NewEncoder(w)
+	enc.SetIndent("", "  ")
+	if err := enc.Encode(response); err != nil {
+		logging.Errorf("Error encoding response: %v", err)
 	}
 }
 
@@ -72,7 +74,7 @@ func Execute() error {
 	// Parse custom headers
 	customHeaders, err := hdrs.SliceToMap(headers)
 	if err != nil {
-		log.Fatal(err)
+		logging.Fatalf("%v", err)
 	}
 
 	// Create server instance
@@ -83,6 +85,6 @@ func Execute() error {
 
 	// Start listening
 	addr := fmt.Sprintf("%s:%s", host, port)
-	fmt.Printf("Starting server on %s\n", addr)
+	logging.Infof("Starting server on %s", addr)
 	return http.ListenAndServe(addr, handler)
 }
