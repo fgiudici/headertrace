@@ -8,6 +8,8 @@ package api
 import (
 	"fmt"
 	"net/http"
+
+	"github.com/oapi-codegen/runtime"
 )
 
 // ErrorResponse Error response
@@ -35,6 +37,9 @@ type HeaderResponse struct {
 
 	// Protocol HTTP protocol version
 	Protocol string `json:"protocol"`
+
+	// Sent HTTP headers sent in the HTTP response
+	Sent *map[string]string `json:"sent,omitempty"`
 }
 
 // ServerInterface represents all server handlers.
@@ -42,6 +47,9 @@ type ServerInterface interface {
 
 	// (GET /)
 	Get(w http.ResponseWriter, r *http.Request)
+
+	// (GET /{matchall})
+	GetMatchall(w http.ResponseWriter, r *http.Request, matchall string)
 }
 
 // ServerInterfaceWrapper converts contexts to parameters.
@@ -58,6 +66,31 @@ func (siw *ServerInterfaceWrapper) Get(w http.ResponseWriter, r *http.Request) {
 
 	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		siw.Handler.Get(w, r)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
+// GetMatchall operation middleware
+func (siw *ServerInterfaceWrapper) GetMatchall(w http.ResponseWriter, r *http.Request) {
+
+	var err error
+
+	// ------------- Path parameter "matchall" -------------
+	var matchall string
+
+	err = runtime.BindStyledParameterWithOptions("simple", "matchall", r.PathValue("matchall"), &matchall, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "matchall", Err: err})
+		return
+	}
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.GetMatchall(w, r, matchall)
 	}))
 
 	for _, middleware := range siw.HandlerMiddlewares {
@@ -188,6 +221,7 @@ func HandlerWithOptions(si ServerInterface, options StdHTTPServerOptions) http.H
 	}
 
 	m.HandleFunc("GET "+options.BaseURL+"/{$}", wrapper.Get)
+	m.HandleFunc("GET "+options.BaseURL+"/{matchall...}", wrapper.GetMatchall)
 
 	return m
 }
