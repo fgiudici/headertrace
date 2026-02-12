@@ -33,6 +33,33 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/ErrorResponse'
+  /{matchall}:
+    get:
+      description: Echoes back the received and sent headers for any path
+      parameters:
+        - name: matchall
+          in: path
+          required: true
+          description: Catches all paths
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Successfully echoed back the headers
+          content:
+            text/html:
+              schema:
+                type: string
+                example: "<html><body>Headers:</body></html>"
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HeaderResponse'
+        '400':
+          description: Bad Request
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
 components:
   schemas:
     HeaderResponse:

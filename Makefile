@@ -22,6 +22,8 @@ help:
 generate:
 	@echo "Generating code from OpenAPI spec..."
 	oapi-codegen -config api/config.yaml api/openapi.yaml
+	@echo "Patching generated code for wildcard path matching..."
+	sed -i 's|"/{matchall}"|"/{matchall...}"|g' api/gen.go
 
 build:
 	@echo "Building application..."

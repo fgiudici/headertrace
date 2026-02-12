@@ -66,6 +66,10 @@ func (s *server) Get(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
+func (s *server) GetMatchall(w http.ResponseWriter, r *http.Request, matchall string) {
+	s.Get(w, r) // Reuse the same logic for all paths
+}
+
 // Execute starts the HTTP server
 func Execute() error {
 	pflag.Parse()
