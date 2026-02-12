@@ -2,6 +2,16 @@
   <br>
     <img width="600" src="./assets/logos/logotype-horizontal.png">
   <br>
+
+<p align="center">
+  <a href="https://github.com/fgiudici/headertrace/releases/latest"><img alt="Latest Release" src="https://img.shields.io/github/v/release/fgiudici/headertrace?display_name=tag&sort=semver"></a>
+  <a href="https://quay.io/repository/fgiudici/headertrace"><img alt="Container Image" src="https://img.shields.io/badge/container-quay.io%2Ffgiudici%2Fheadertrace-blue"></a>
+  <a href="https://github.com/fgiudici/headertrace/actions/workflows/go.yml"><img alt="Go Build" src="https://github.com/fgiudici/headertrace/actions/workflows/go.yml/badge.svg"></a>
+  <a href="https://github.com/fgiudici/headertrace/blob/main/go.mod"><img alt="Go Version" src="https://img.shields.io/github/go-mod/go-version/fgiudici/headertrace"></a>
+  <a href="https://goreportcard.com/report/github.com/fgiudici/headertrace"><img alt="Go Report Card" src="https://goreportcard.com/badge/github.com/fgiudici/headertrace"></a>
+  <a href="https://github.com/fgiudici/headertrace/blob/main/LICENSE"><img alt="License" src="https://img.shields.io/github/license/fgiudici/headertrace"></a>
+</p>
+
 </h1>
 
 **headertrace** is a simple HTTP server echoing back HTTP client Headers in the response body.
