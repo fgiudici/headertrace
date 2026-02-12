@@ -15,18 +15,21 @@ var (
 	port         string
 	host         string
 	headers      []string
+	sentHeaders  bool
 	printVersion bool
 )
 
 func init() {
-	pflag.StringVarP(&port, "port", "p", "8080", "Port to listen on")
-	pflag.StringVarP(&host, "host", "", "0.0.0.0", "Host to listen on")
-	pflag.StringSliceVarP(&headers, "header", "H", []string{}, "Custom response header (key:value format)")
+	pflag.StringVarP(&host, "address", "a", "0.0.0.0", "IP address (or domain) to bind to")
+	pflag.StringVarP(&port, "port", "p", "8080", "TCP port to bind to")
+	pflag.StringSliceVarP(&headers, "header", "H", []string{}, "Custom HTTP headers to add to the HTTP responses (key:value format)")
+	pflag.BoolVarP(&sentHeaders, "sent", "s", false, "Include the original HTTP headers added to the response in the body")
 	pflag.BoolVarP(&printVersion, "version", "v", false, "Print version and exit")
 }
 
 type server struct {
-	headers map[string]string
+	headers     map[string]string
+	sentHeaders bool
 }
 
 // Get implements api.ServerInterface
@@ -35,11 +38,23 @@ func (s *server) Get(w http.ResponseWriter, r *http.Request) {
 
 	// Convert headers to map
 	headers := hdrs.ToMap(r.Header)
+	var xHeadersPtr *map[string]string
 
-	// Determine protocol version
 	protocol := r.Proto
 	if protocol == "" {
 		protocol = "HTTP/1.1"
+	}
+
+	// Set response headers
+	w.Header().Set("Content-Type", "application/json")
+	for key, value := range s.headers {
+		w.Header().Set(key, value)
+	}
+	w.WriteHeader(http.StatusOK)
+
+	if s.sentHeaders {
+		xHeaders := hdrs.ToMap(w.Header())
+		xHeadersPtr = &xHeaders
 	}
 
 	// Create the response
@@ -49,14 +64,8 @@ func (s *server) Get(w http.ResponseWriter, r *http.Request) {
 		Method:   r.Method,
 		Path:     r.RequestURI,
 		Protocol: protocol,
+		Sent:     xHeadersPtr,
 	}
-
-	// Set response headers
-	w.Header().Set("Content-Type", "application/json")
-	for key, value := range s.headers {
-		w.Header().Set(key, value)
-	}
-	w.WriteHeader(http.StatusOK)
 
 	// Encode and send the response
 	enc := json.NewEncoder(w)
@@ -84,7 +93,7 @@ func Execute() error {
 	}
 
 	// Create server instance
-	srv := &server{headers: customHeaders}
+	srv := &server{headers: customHeaders, sentHeaders: sentHeaders}
 
 	// Create handler from the generated code
 	handler := api.Handler(srv)

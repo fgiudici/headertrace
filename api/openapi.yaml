@@ -91,6 +91,14 @@ components:
           type: string
           description: HTTP protocol version
           example: "HTTP/1.1"
+        sent:
+          type: object
+          description: HTTP headers sent in the HTTP response
+          additionalProperties:
+            type: string
+          example:
+            "my-header": "foo"
+            "content-type": "application/json"
       required:
         - headers
         - host
