@@ -4,7 +4,7 @@
   <br>
 
 <p align="center">
-  <a href="https://github.com/fgiudici/headertrace/releases/latest"><img alt="Latest Release" src="https://img.shields.io/github/v/release/fgiudici/headertrace?display_name=tag&sort=semver"></a>
+  <a href="https://github.com/fgiudici/headertrace/releases/latest"><img alt="Latest Release" src="https://img.shields.io/github/v/release/fgiudici/headertrace"></a>
   <a href="https://quay.io/repository/fgiudici/headertrace"><img alt="Container Image" src="https://img.shields.io/badge/container-quay.io%2Ffgiudici%2Fheadertrace-blue"></a>
   <a href="https://github.com/fgiudici/headertrace/actions/workflows/go.yml"><img alt="Go Build" src="https://github.com/fgiudici/headertrace/actions/workflows/go.yml/badge.svg"></a>
   <a href="https://github.com/fgiudici/headertrace/blob/main/go.mod"><img alt="Go Version" src="https://img.shields.io/github/go-mod/go-version/fgiudici/headertrace"></a>
@@ -22,10 +22,10 @@ It's main usage is to help debugging HTTP header transformations.
 
 ## Installation
 
-**headertrace** is built for different OS/architectures as a standalone binary (see the #download-pre-built-binaries section).
+**headertrace** is built for different OS/architectures as a standalone binary (see the [Download Binaries](#download-binaries) section).
 
 Linux container images for both AMD64 and ARM64 architectures are also available 
-Jump to the #container-images section for more info.
+Jump to the [Container Images](#container-images) section for more info.
 
 ### Download Binaries
 
