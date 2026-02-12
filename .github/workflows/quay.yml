@@ -41,6 +41,7 @@ jobs:
           if [[ "${{ github.event_name }}" == "push" ]]; then
             echo "tags<<EOF" >> $GITHUB_OUTPUT
             echo "quay.io/fgiudici/headertrace:${{ github.ref_name }}-${{ github.sha }}" >> $GITHUB_OUTPUT
+            echo "quay.io/fgiudici/headertrace:${{ github.ref_name }}" >> $GITHUB_OUTPUT
             echo "quay.io/fgiudici/headertrace:latest" >> $GITHUB_OUTPUT
             echo "EOF" >> $GITHUB_OUTPUT
           else
