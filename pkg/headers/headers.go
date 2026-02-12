@@ -3,7 +3,10 @@ package headers
 import (
 	"fmt"
 	"net/http"
+	"slices"
 	"strings"
+
+	"github.com/fgiudici/headertrace/pkg/logging"
 )
 
 // Slice2Map takes a slice of header strings in "key:value" format and returns a map.
@@ -24,12 +27,32 @@ func SliceToMap(headerStrings []string) (map[string]string, error) {
 }
 
 // ToMap converts an http.Header to a "key:value" map.
-func ToMap(headers http.Header) map[string]string {
+// It takes a list of headers to drop and a privacy mode flag to exclude headers that may reveal
+// sensitive information of the internal network. Note that enabling debug logging will log all droppped headers.
+func ToMap(headers http.Header, dropHeaders []string, privmode bool) map[string]string {
 	headerMap := make(map[string]string)
 	for key, values := range headers {
+		if slices.Contains(dropHeaders, key) {
+			logging.Debugf("Dropping header '%s':'%s'", key, strings.Join(values, ","))
+			continue
+		}
+		if privmode {
+			if isCloudflareHeader(key) || isXForwardedHeader(key) {
+				logging.Debugf("Dropping header '%s':'%s' (privacy mode)", key, strings.Join(values, ","))
+				continue
+			}
+		}
 		headerMap[key] = strings.Join(values, ",")
 	}
 	return headerMap
+}
+
+func isCloudflareHeader(header string) bool {
+	return strings.HasPrefix(header, "CF-") || strings.HasPrefix(header, "Cf-")
+}
+
+func isXForwardedHeader(header string) bool {
+	return strings.HasPrefix(header, "X-Forwarded-") || header == "X-Real-Ip"
 }
 
 func RemoteHostInfo(r *http.Request) string {
