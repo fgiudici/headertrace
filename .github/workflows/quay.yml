@@ -46,8 +46,11 @@ jobs:
             echo "EOF" >> $GITHUB_OUTPUT
             echo "version=${{ github.ref_name }}" >> $GITHUB_OUTPUT
           else
-            echo "tags=quay.io/fgiudici/headertrace:${{ github.event.inputs.image-tag }}" >> $GITHUB_OUTPUT
-            echo "version=${{ github.event.inputs.image-tag }}" >> $GITHUB_OUTPUT
+            INPUT_TAG="${{ github.event.inputs.image-tag }}"
+            SAFE_TAG="${INPUT_TAG//$'\n'/}"
+            SAFE_TAG="${SAFE_TAG//$'\r'/}"
+            echo "tags=quay.io/fgiudici/headertrace:${SAFE_TAG}" >> $GITHUB_OUTPUT
+            echo "version=${SAFE_TAG}" >> $GITHUB_OUTPUT
           fi
 
       # Build and Push
