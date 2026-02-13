@@ -28,15 +28,15 @@ func SliceToMap(headerStrings []string) (map[string]string, error) {
 
 // ToMap converts an http.Header to a "key:value" map.
 // It takes a list of headers to drop and a privacy mode flag to exclude headers that may reveal
-// sensitive information of the internal network. Note that enabling debug logging will log all droppped headers.
-func ToMap(headers http.Header, dropHeaders []string, privmode bool) map[string]string {
+// sensitive information of the internal network. Note that enabling debug logging will log all dropped headers.
+func ToMap(headers http.Header, dropHeaders []string, privMode bool) map[string]string {
 	headerMap := make(map[string]string)
 	for key, values := range headers {
 		if slices.Contains(dropHeaders, key) {
 			logging.Debugf("Dropping header '%s':'%s'", key, strings.Join(values, ","))
 			continue
 		}
-		if privmode {
+		if privMode {
 			if isCloudflareHeader(key) || isXForwardedHeader(key) {
 				logging.Debugf("Dropping header '%s':'%s' (privacy mode)", key, strings.Join(values, ","))
 				continue
