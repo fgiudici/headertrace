@@ -9,7 +9,8 @@ import (
 type level int
 
 const (
-	DEBUG level = iota
+	TRACE level = iota
+	DEBUG
 	INFO
 	WARN
 	ERROR
@@ -18,10 +19,12 @@ const (
 var lvl = INFO
 
 // Init configures the logger. It reads LOG_LEVEL from the environment
-// (one of: DEBUG, INFO, WARN, ERROR) and sets a simple prefix.
+// (one of: TRACE, DEBUG, INFO, WARN, ERROR) and sets a simple prefix.
 func Init() {
 	if v := os.Getenv("LOG_LEVEL"); v != "" {
 		switch strings.ToUpper(v) {
+		case "TRACE":
+			lvl = TRACE
 		case "DEBUG":
 			lvl = DEBUG
 		case "INFO":
@@ -33,6 +36,12 @@ func Init() {
 		}
 	}
 	log.SetFlags(log.LstdFlags)
+}
+
+func Tracef(format string, v ...interface{}) {
+	if lvl <= TRACE {
+		log.Printf("TRACE: "+format, v...)
+	}
 }
 
 func Debugf(format string, v ...interface{}) {

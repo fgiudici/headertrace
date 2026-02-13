@@ -37,16 +37,17 @@ func ToMap(headers http.Header, dropHeaders []string, privMode bool) map[string]
 	for key, values := range headers {
 		lowerKey := strings.ToLower(key)
 		if slices.Contains(normalizedDropHeaders, lowerKey) {
-			logging.Debugf("Dropping header '%s':'%s'", key, strings.Join(values, ","))
+			logging.Debugf("Redact header '%s':'%s'", key, strings.Join(values, ","))
 			continue
 		}
 		if privMode {
 			if isCloudflareHeader(lowerKey) || isXForwardedHeader(lowerKey) {
-				logging.Debugf("Dropping header '%s':'%s' (privacy mode)", key, strings.Join(values, ","))
+				logging.Debugf("Redact header '%s':'%s' (privacy mode)", key, strings.Join(values, ","))
 				continue
 			}
 		}
 		headerMap[key] = strings.Join(values, ",")
+		logging.Tracef("Dump header '%s':'%s'", key, headerMap[key])
 	}
 	return headerMap
 }
