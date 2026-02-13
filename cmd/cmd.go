@@ -108,7 +108,10 @@ func Execute() error {
 	if logLevel != "" {
 		os.Setenv("LOG_LEVEL", logLevel)
 	}
-	logging.Init()
+	if err := logging.Init(logLevel); err != nil {
+		logging.Fatalf("Failed to initialize logging: %v", err)
+	}
+
 	logging.Infof("Starting HeaderTrace version %s", getVersion())
 
 	// Parse custom headers

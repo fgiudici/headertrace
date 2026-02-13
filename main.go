@@ -6,7 +6,6 @@ import (
 )
 
 func main() {
-	logging.Init()
 	if err := cmd.Execute(); err != nil {
 		logging.Fatalf("%v", err)
 	}
