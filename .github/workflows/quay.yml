@@ -34,7 +34,7 @@ jobs:
           username: ${{ secrets.QUAY_USERNAME }}
           password: ${{ secrets.QUAY_ROBOT_TOKEN }}
 
-      # Craft image tags
+      # Craft image tags and version
       - name: Craft image tags
         id: tags
         run: |
@@ -44,8 +44,10 @@ jobs:
             echo "quay.io/fgiudici/headertrace:${{ github.ref_name }}" >> $GITHUB_OUTPUT
             echo "quay.io/fgiudici/headertrace:latest" >> $GITHUB_OUTPUT
             echo "EOF" >> $GITHUB_OUTPUT
+            echo "version=${{ github.ref_name }}" >> $GITHUB_OUTPUT
           else
             echo "tags=quay.io/fgiudici/headertrace:${{ github.event.inputs.image-tag }}" >> $GITHUB_OUTPUT
+            echo "version=${{ github.event.inputs.image-tag }}" >> $GITHUB_OUTPUT
           fi
 
       # Build and Push
@@ -58,3 +60,6 @@ jobs:
           platforms: linux/amd64,linux/arm64
           tags: |
             ${{ steps.tags.outputs.tags }}
+          build-args: |
+            VERSION=${{ steps.tags.outputs.version }}
+            COMMIT=${{ github.sha }}
