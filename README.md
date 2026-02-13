@@ -58,25 +58,29 @@ Jump to the [Container Images](#container-images) section for more info.
 
 ## Quickstart
 
-Start the HTTP server (default TCP port is 8080):
+Running the binary with no arguments starts the HTTP server on port 8080):
 
 ```bash
 headertrace
 ```
 
-to listen on a particular IP address (or hostname) and TCP port use the `-a` and `-p` parameters:
+connect to the server with a browser or an HTTP client to get headers echoed back:
 
 ```bash
-headertrace -a 192.168.1.10 -p 1234
+$ curl 127.0.0.1:8080 
+{
+  "headers": {
+    "Accept": "*/*",
+    "User-Agent": "curl/8.5.0"
+  },
+  "host": "localhost:8080",
+  "method": "GET",
+  "path": "/",
+  "protocol": "HTTP/1.1"
+}
+
 ```
-
-to add custom Headers in all HTTP server replies use the `-H` flag:
-
-```bash
-headertrace -H "X-Custom-HDR1:value,X-Custom-HDR2:value"
-```
-
-inline help:
+For a list of available options, see the [Usage section](#usage) or view the inline help:
 
 ```bash
 headertrace -h
@@ -89,7 +93,7 @@ You can run the container images directly with **podman** or **docker**:
 ```bash
 docker run quay.io/fgiudici/headertrace:latest
 ```
-and pass the options as usual (see the [Quickstart](#quickstart) section).
+and pass the arguments as usual (see the [Usage section](#usage) or view the inline help `-h`).
 
 
 A sample Kubernetes Deployment and an associated Service would look like:
@@ -134,4 +138,197 @@ spec:
   selector:
     app: headertrace
   type: NodePort
+```
+
+## Usage
+
+### Command Line Reference
+
+```
+headertrace [flags]
+```
+
+| Flag | Short | Default | Description |
+|------|-------|---------|-------------|
+| `--address` | `-a` | `0.0.0.0` | IP address (or domain) to bind the server to. |
+| `--port` | `-p` | `8080` | TCP port to bind the server to. |
+| `--header` | `-H` | _(none)_ | Custom HTTP headers to add to every response (format: `key1:value1,key2:value2`). |
+| `--drop-header` | `-D` | _(none)_ | HTTP headers to redact from request headers echoed in the response body (format: `key1,key2`). |
+| `--privacy` | `-P` | `false` | Drop `X-Forwarded-*`, `X-Real-IP`, and `Cf-*` (Cloudflare) headers from echoed request headers. |
+| `--sent` | `-s` | `false` | Include the HTTP headers added in the server response inside the response body. |
+| `--log-level` | `-l` | _(none)_ | Set the logging verbosity. Accepted values: `TRACE`, `DEBUG`, `INFO`, `WARN`, `ERROR`. Overrides the `LOG_LEVEL` environment variable. |
+| `--version` | `-v` | | Print version and exit. |
+| `--help` | `-h` | | Print help and exit. |
+
+### Environment Variables
+
+| Variable | Description |
+|----------|-------------|
+| `LOG_LEVEL` | Sets the logging verbosity (`TRACE`, `DEBUG`, `INFO`, `WARN`, `ERROR`). Can be overridden by the `--log-level` flag. Defaults to `INFO` if unset. |
+
+### Response Format
+
+**headertrace** responds with a JSON body containing information about the received HTTP request:
+
+```json
+{
+  "headers": {
+    "Accept": "*/*",
+    "User-Agent": "curl/8.5.0"
+  },
+  "host": "localhost:8080",
+  "method": "GET",
+  "path": "/",
+  "protocol": "HTTP/1.1"
+}
+```
+
+| Field | Type | Description |
+|-------|------|-------------|
+| `headers` | object | HTTP headers received in the client request. |
+| `host` | string | Host (and port) the request was sent to. |
+| `method` | string | HTTP method of the request (e.g. `GET`). |
+| `path` | string | Request URI path. |
+| `protocol` | string | HTTP protocol version (e.g. `HTTP/1.1`). |
+| `sent` | object | _(Optional)_ HTTP headers added in the server response. Only present when `-s` / `--sent` is enabled. |
+
+### Examples
+
+#### Basic server
+
+Start **headertrace** with default settings (listening on `0.0.0.0:8080`):
+
+```bash
+headertrace
+```
+
+Test it with curl:
+
+```bash
+$ curl -s http://localhost:8080 | jq .
+{
+  "headers": {
+    "Accept": "*/*",
+    "User-Agent": "curl/8.5.0"
+  },
+  "host": "localhost:8080",
+  "method": "GET",
+  "path": "/",
+  "protocol": "HTTP/1.1"
+}
+```
+
+#### Bind to a specific address and port
+
+```bash
+headertrace -a 192.168.1.10 -p 3000
+```
+
+#### Add custom response headers
+
+Inject custom headers into every HTTP response. Useful for simulating upstream services that set specific headers:
+
+```bash
+headertrace -H "X-Served-By:headertrace,X-Request-Region:eu-west-1"
+```
+
+```bash
+$ curl -s -D - http://localhost:8080
+HTTP/1.1 200 OK
+Content-Type: application/json
+X-Request-Region: eu-west-1
+X-Served-By: headertrace
+
+{
+  "headers": { ... },
+  ...
+}
+```
+
+#### Inspect response headers in the body (`--sent`)
+
+Include the headers sent by the server in the JSON response body — useful for verifying what headers the server is actually returning:
+
+```bash
+headertrace -s -H "X-Custom:hello"
+```
+
+```bash
+$ curl -s http://localhost:8080 | jq .
+{
+  "headers": {
+    "Accept": "*/*",
+    "User-Agent": "curl/8.5.0"
+  },
+  "host": "localhost:8080",
+  "method": "GET",
+  "path": "/",
+  "protocol": "HTTP/1.1",
+  "sent": {
+    "Content-Type": "application/json",
+    "X-Custom": "hello"
+  }
+}
+```
+
+#### Redact specific request headers (`--drop-header`)
+
+Hide specific request headers from the response body. This is useful when you want to filter out noisy or irrelevant headers:
+
+```bash
+headertrace -D "Authorization,Cookie"
+```
+
+```bash
+$ curl -s -H "Authorization: Bearer secret" -H "Cookie: session=abc" http://localhost:8080 | jq .
+{
+  "headers": {
+    "Accept": "*/*",
+    "User-Agent": "curl/8.5.0"
+  },
+  "host": "localhost:8080",
+  "method": "GET",
+  "path": "/",
+  "protocol": "HTTP/1.1"
+}
+```
+
+The `Authorization` and `Cookie` headers are received by the server but omitted from the response body.
+
+#### Privacy mode
+
+Enable privacy mode to automatically redact proxy-related headers (`X-Forwarded-*`, `X-Real-IP`) and Cloudflare headers (`Cf-*`):
+
+```bash
+headertrace -P
+```
+
+This is particularly useful when the server sits behind a reverse proxy or CDN and you want to avoid echoing back internal network information.
+
+#### Verbose logging
+
+Increase log verbosity for troubleshooting. At `DEBUG` level, redacted headers are logged; at `TRACE` level, all header values are logged:
+
+```bash
+headertrace -l DEBUG
+```
+
+Or using the environment variable:
+
+```bash
+LOG_LEVEL=TRACE headertrace
+```
+
+#### Combining multiple options
+
+Run on a custom port, add response headers, redact sensitive request headers, enable privacy mode, and dump sent headers — all at once:
+
+```bash
+headertrace -p 9090 -H "X-Served-By:headertrace" -D "Authorization" -P -s -l DEBUG
+```
+
+#### Running with containers
+
+```bash
+docker run -p 8080:8080 quay.io/fgiudici/headertrace:latest -H "X-Served-By:headertrace" -P -s
 ```
