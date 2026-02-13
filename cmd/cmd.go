@@ -21,6 +21,7 @@ var (
 	sentHeaders  bool
 	privMode     bool
 	printVersion bool
+	logLevel     string
 )
 
 func init() {
@@ -37,6 +38,7 @@ func init() {
 	pflag.BoolVarP(&privMode, "privacy", "P", false, "Drop X-Forwarded and Cloudflare headers from request headers echoed in the response body")
 	pflag.BoolVarP(&sentHeaders, "sent", "s", false, "Dump the HTTP headers added in the response in the response body")
 	pflag.BoolVarP(&printVersion, "version", "v", false, "Print version and exit")
+	pflag.StringVarP(&logLevel, "log-level", "l", "", "Logging level: TRACE, DEBUG, INFO, WARN, ERROR (overrides the LOG_LEVEL env variable)")
 }
 
 type server struct {
@@ -67,6 +69,7 @@ func (s *server) Get(w http.ResponseWriter, r *http.Request) {
 	w.WriteHeader(http.StatusOK)
 
 	if s.sentHeaders {
+		logging.Tracef("Dumping sent headers to response body")
 		xHeaders := hdrs.ToMap(w.Header(), nil, false)
 		xHeadersPtr = &xHeaders
 	}
@@ -100,11 +103,32 @@ func Execute() error {
 		fmt.Println(getVersion())
 		return nil
 	}
+
+	// Init logging level
+	if logLevel != "" {
+		os.Setenv("LOG_LEVEL", logLevel)
+	}
+	if err := logging.Init(logLevel); err != nil {
+		logging.Fatalf("Failed to initialize logging: %v", err)
+	}
+
+	logging.Infof("Starting HeaderTrace version %s", getVersion())
+
 	// Parse custom headers
 	customHeaders, err := hdrs.SliceToMap(headers)
 	if err != nil {
-		logging.Fatalf("%v", err)
+		logging.Fatalf("Custom headers: %v", err)
 	}
+	if len(customHeaders) > 0 {
+		logging.Debugf("Custom headers to add in responses: %v", customHeaders)
+	}
+
+	if len(dropHeaders) > 0 {
+		logging.Debugf("Headers to drop from echoed request headers: %v", dropHeaders)
+	}
+
+	logging.Debugf("Privacy mode: %v", privMode)
+	logging.Debugf("Dump sent headers: %v", sentHeaders)
 
 	// Create server instance
 	srv := &server{headers: customHeaders,
