@@ -66,8 +66,8 @@ func TestSliceToMap(t *testing.T) {
 			want:  map[string]string{},
 		},
 		{
-			name:  "whitespace only key and value",
-			input: []string{"   :   "},
+			name:    "whitespace only key and value",
+			input:   []string{"   :   "},
 			wantErr: true,
 		},
 		{
@@ -228,7 +228,7 @@ func TestGetRemoteHostInfo(t *testing.T) {
 			},
 			method:     "GET",
 			urlString:  "http://example.com/",
-			expectedIP: "1.2.3.4 (US)",
+			expectedIP: "1.2.3.4(US)",
 		},
 		{
 			name:       "uses X-Real-IP when CF-Connecting-IP not available",
@@ -270,7 +270,7 @@ func TestGetRemoteHostInfo(t *testing.T) {
 			},
 			method:     "GET",
 			urlString:  "http://example.com/",
-			expectedIP: "1.2.3.4 (IT)",
+			expectedIP: "1.2.3.4(IT)",
 		},
 		{
 			name:       "prefers x-Real-ip over X-Forwarded-For when CF-Connecting-IP missing",
