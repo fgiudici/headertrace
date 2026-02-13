@@ -4,6 +4,8 @@ import (
 	"encoding/json"
 	"fmt"
 	"net/http"
+	"os"
+	"path/filepath"
 
 	"github.com/fgiudici/headertrace/api"
 	hdrs "github.com/fgiudici/headertrace/pkg/headers"
@@ -22,12 +24,18 @@ var (
 )
 
 func init() {
+	pflag.Usage = func() {
+		fmt.Fprintf(os.Stderr, "HeaderTrace %s - A simple HTTP server that echoes back received HTTP headers\n\n", getVersion())
+		fmt.Fprintf(os.Stderr, "Usage: %s [flags]\n\n", filepath.Base(os.Args[0]))
+		pflag.PrintDefaults()
+	}
+
 	pflag.StringVarP(&host, "address", "a", "0.0.0.0", "IP address (or domain) to bind to")
 	pflag.StringVarP(&port, "port", "p", "8080", "TCP port to bind to")
-	pflag.StringSliceVarP(&headers, "header", "H", []string{}, "Custom HTTP headers to add to the HTTP responses (key1:value1,key2:value2 format)")
-	pflag.StringSliceVarP(&dropHeaders, "drop-header", "D", []string{}, "Custom HTTP headers to drop from the HTTP responses (key1,key2 format)")
-	pflag.BoolVarP(&privMode, "privacy", "P", false, "Enable privacy mode (drop X-Forwarded and Cloudflare headers from the response)")
-	pflag.BoolVarP(&sentHeaders, "sent", "s", false, "Include the original HTTP headers added to the response in the body")
+	pflag.StringSliceVarP(&headers, "header", "H", []string{}, "Custom HTTP headers to add to responses (key1:value1,key2:value2)")
+	pflag.StringSliceVarP(&dropHeaders, "drop-header", "D", []string{}, "HTTP headers to redact from request headers echoed in the response body (key1,key2)")
+	pflag.BoolVarP(&privMode, "privacy", "P", false, "Drop X-Forwarded and Cloudflare headers from request headers echoed in the response body")
+	pflag.BoolVarP(&sentHeaders, "sent", "s", false, "Dump the HTTP headers added in the response in the response body")
 	pflag.BoolVarP(&printVersion, "version", "v", false, "Print version and exit")
 }
 
