@@ -18,10 +18,11 @@ func SliceToMap(headerStrings []string) (map[string]string, error) {
 		if len(parts) != 2 {
 			return nil, fmt.Errorf("invalid header format '%s', expected 'key:value'", h)
 		}
+		parts[0] = strings.TrimSpace(parts[0])
 		if parts[0] == "" {
 			return nil, fmt.Errorf("header key cannot be empty in '%s'", h)
 		}
-		headers[strings.TrimSpace(parts[0])] = strings.TrimSpace(parts[1])
+		headers[parts[0]] = strings.TrimSpace(parts[1])
 	}
 	return headers, nil
 }
@@ -94,11 +95,11 @@ func GetRemoteHostInfo(r *http.Request) string {
 
 	// Proxied through Cloudflare?
 	if remote := r.Header.Get("CF-Connecting-IP"); remote != "" {
-		remoteAddr = fmt.Sprintf("%s (%s)", remote, r.Header.Get("Cf-Ipcountry"))
+		remoteAddr = fmt.Sprintf("%s(%s) [%s]", remote, r.Header.Get("Cf-Ipcountry"), remoteAddr)
 	} else if remote := r.Header.Get("X-Real-Ip"); remote != "" {
-		remoteAddr = remote
+		remoteAddr = fmt.Sprintf("%s [%s]", remote, remoteAddr)
 	} else if remote := r.Header.Get("X-Forwarded-For"); remote != "" {
-		remoteAddr = remote
+		remoteAddr = fmt.Sprintf("%s [%s]", remote, remoteAddr)
 	}
 
 	return fmt.Sprintf("%s %q - %s %s %q", remoteAddr, userAgent, r.Method, r.Proto, r.URL.String())
