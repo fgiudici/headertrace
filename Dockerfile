@@ -1,6 +1,9 @@
 # Build stage
 FROM golang:1.25 AS builder
 
+ARG VERSION=unknown
+ARG COMMIT=""
+
 WORKDIR /app
 
 # Copy go mod files
@@ -15,7 +18,7 @@ COPY . .
 # Build the binary
 RUN CGO_ENABLED=0 go build -a -installsuffix cgo \
     -ldflags "-w -s \
-    -X github.com/fgiudici/headertrace/cmd.version=${VERSION:-v0.0.1} \
+    -X github.com/fgiudici/headertrace/cmd.version=${VERSION} \
     -X github.com/fgiudici/headertrace/cmd.gitCommit=${COMMIT}" \
     -o headertrace .
 
