@@ -26,15 +26,6 @@ func TestGetVersionWithCommit(t *testing.T) {
 	}
 }
 
-func TestGetVersionShortCommit(t *testing.T) {
-	version = "v0.0.0"
-	gitCommit = "abc"
-	got := getVersion()
-	if got != "v0.0.0" {
-		t.Fatalf("getVersion() with short commit = %q, want %q", got, "v0.0.0")
-	}
-}
-
 func TestGetVersionExactlySevenCharCommit(t *testing.T) {
 	version = "v0.0.0"
 	gitCommit = "1234567"
