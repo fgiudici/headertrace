@@ -20,7 +20,7 @@ jobs:
 
       # Set up QEMU for multi-platform support (ARM64, etc.)
       - name: Set up QEMU
-        uses: docker/setup-qemu-action@v3
+        uses: docker/setup-qemu-action@v4
 
       # Set up Docker Buildx
       - name: Set up Docker Buildx
